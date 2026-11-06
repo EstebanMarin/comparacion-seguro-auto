@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparación Seguro Auto</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f6f5f2;--card:#fff;--ink:#1d1d1f;--muted:#6b6b70;--line:#e3e1dc;
+  --axa:#2f5bb7;--mapfre:#c8102e;--bolivar:#1f8a4c;
+  --win:#e7f5ec;--winink:#17643a;--no:#fbeaea;--noink:#9b1c1c;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#141416;--card:#1e1e22;--ink:#ececf0;--muted:#9a9aa3;--line:#2e2e34;
+  --axa:#6d93e8;--mapfre:#ef5a6f;--bolivar:#4fc283;
+  --win:#173a26;--winink:#8fe0b0;--no:#3a1a1c;--noink:#f2a3a3;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:1.7rem;margin:0 0 4px}
+h2{font-size:1.2rem;margin:36px 0 12px}
+.sub{color:var(--muted);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.ins{border-top:4px solid var(--c)}
+.ins h3{margin:0 0 4px;color:var(--c)}
+.ins .tag{font-size:.8rem;color:var(--muted)}
+label{display:block;font-size:.85rem;color:var(--muted);margin-top:10px}
+input{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-size:1rem}
+.alert{background:#fff6dd;border:1px solid #ecd58a;color:#5d4a00;border-radius:10px;padding:12px 14px;margin-bottom:12px}
+@media (prefers-color-scheme:dark){.alert{background:#332a0c;border-color:#6b5713;color:#f1dc94}}
+.verdict{font-size:1.05rem}
+.verdict b{font-size:1.15rem}
+.chartbox{position:relative;height:320px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:720px}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:var(--card);font-size:.8rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)}
+th.a{color:var(--axa)}th.m{color:var(--mapfre)}th.b{color:var(--bolivar)}
+td.win{background:var(--win);color:var(--winink);font-weight:600}
+td.no{background:var(--no);color:var(--noink)}
+tr.sec td{background:var(--bg);font-weight:700;font-size:.8rem;text-transform:uppercase;color:var(--muted)}
+.score{display:flex;gap:12px;flex-wrap:wrap}
+.score div{flex:1;min-width:150px;text-align:center;padding:12px;border-radius:10px;background:var(--bg)}
+.score .n{font-size:2rem;font-weight:700}
+small{color:var(--muted)}
+ul{padding-left:20px;margin:6px 0}
+</style>
+</head>
+<body>
+<main>
+<h1>Seguro del carro: ¿AXA, MAPFRE o seguir con Bolívar?</h1>
+<p class="sub">Honda CR-V EXL 2019 · Valor asegurado $108.100.000 · Vigencia cotizada 2026–2027</p>
+
+<div class="alert">
+  <b>Faltan los precios.</b> Ningún documento trae la prima (lo que se paga al año). Escribe abajo la prima de cada opción y las gráficas de costo se actualizan solas.<br>
+  <b>Revisa las fechas:</b> AXA y MAPFRE cotizan desde el <b>31-ago-2026</b>, pero la póliza actual de Bolívar va hasta el <b>29-nov-2026</b>. Pídele al asesor que ajuste la fecha de inicio.
+</div>
+
+<div class="grid3">
+  <div class="card ins" style="--c:var(--axa)"><h3>AXA Colpatria</h3><span class="tag">Cotización nueva</span>
+    <label>Prima anual (COP, IVA incluido)</label><input id="p_axa" inputmode="numeric" placeholder="ej. 3.500.000"></div>
+  <div class="card ins" style="--c:var(--mapfre)"><h3>MAPFRE</h3><span class="tag">Cotización nueva</span>
+    <label>Prima anual (COP, IVA incluido)</label><input id="p_mapfre" inputmode="numeric" placeholder="ej. 3.500.000"></div>
+  <div class="card ins" style="--c:var(--bolivar)"><h3>Seguros Bolívar</h3><span class="tag">Póliza actual (renovación)</span>
+    <label>Prima anual (COP, IVA incluido)</label><input id="p_bolivar" inputmode="numeric" placeholder="ej. 3.500.000"></div>
+</div>
+<div class="card">
+  <label style="margin-top:0">Salario mínimo mensual 2026 (SMMLV) — se usa para convertir deducibles y límites a pesos</label>
+  <input id="smmlv" inputmode="numeric" value="1.750.905" style="max-width:260px">
+</div>
+
+<h2>Veredicto</h2>
+<div class="card verdict" id="verdict"></div>
+
+<div class="card">
+  <div class="score">
+    <div><div class="n" style="color:var(--axa)" id="s_axa">0</div>coberturas donde AXA gana</div>
+    <div><div class="n" style="color:var(--mapfre)" id="s_mapfre">0</div>coberturas donde MAPFRE gana</div>
+    <div><div class="n" style="color:var(--bolivar)" id="s_bolivar">0</div>coberturas donde Bolívar gana</div>
+  </div>
+  <small>Empates cuentan para ambos. Basado en la tabla detallada de abajo.</small>
+</div>
+
+<h2>1. Costo total del año según cuántos choques tengas</h2>
+<div class="card">
+  <p style="margin-top:0"><small>Prima + deducible que pagas de tu bolsillo por cada choque o hurto parcial. Si no has escrito las primas, solo se ve el deducible.</small></p>
+  <div class="chartbox"><canvas id="cCost"></canvas></div>
+</div>
+
+<h2>2. Deducible: lo que pagas tú en cada reclamo</h2>
+<div class="card">
+  <p style="margin-top:0"><small>Más bajo = mejor. Pérdida total (daño o hurto) es sin deducible en las tres.</small></p>
+  <div class="chartbox"><canvas id="cDed"></canvas></div>
+</div>
+
+<h2>3. Límites de responsabilidad civil y accidentes personales</h2>
+<div class="card">
+  <p style="margin-top:0"><small>Más alto = mejor. Responsabilidad civil es lo que el seguro paga si le haces daño a otra persona o a otro carro.</small></p>
+  <div class="chartbox"><canvas id="cRC"></canvas></div>
+</div>
+
+<h2>4. Sublímites de beneficios (en pesos)</h2>
+<div class="card">
+  <p style="margin-top:0"><small>Más alto = mejor. Una barra vacía significa que esa aseguradora no lo incluye o no lo especifica.</small></p>
+  <div class="chartbox" style="height:380px"><canvas id="cSub"></canvas></div>
+</div>
+
+<h2>5. Tabla detallada</h2>
+<div class="card tablewrap">
+<table id="tbl">
+  <thead><tr><th>Cobertura</th><th class="a">AXA</th><th class="m">MAPFRE</th><th class="b">Bolívar (actual)</th></tr></thead>
+  <tbody></tbody>
+</table>
+<p><small>Verde = mejor en esa fila. Rojo = no lo incluye. "No especifica" = la hoja de Bolívar que hay (página 2 de 4) no lo menciona; puede estar en las otras páginas.</small></p>
+</div>
+
+<h2>Qué preguntarle al asesor</h2>
+<div class="card"><ul>
+  <li>La <b>prima anual</b> de cada opción (y si se puede pagar en cuotas sin recargo).</li>
+  <li>Que la vigencia arranque el <b>29-nov-2026</b>, cuando vence Bolívar.</li>
+  <li>MAPFRE: confirmar que <b>Rotura de vidrios</b> quede escrita en la carátula (si no, no aplica).</li>
+  <li>GAP "valor agregado" solo aplica a carros de hasta 7 años: la CR-V 2019 queda en el límite; preguntar si aplica.</li>
+  <li>Bolívar: pedir las páginas 3 y 4 (precio, asistencias, conductor elegido).</li>
+</ul></div>
+
+<p><small>Fuente: cotizaciones AXA Colpatria y MAPFRE (vigencia 2026–2027) y póliza actual de Seguros Bolívar. Resumen informativo: lo que vale es el clausulado de cada aseguradora. Actualizado: noviembre 2026.</small></p>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const num = s => Number(String(s||'').replace(/[^\d]/g,'')) || 0;
+const fmt = n => '$' + Math.round(n).toLocaleString('es-CO');
+const fmtM = n => '$' + (n/1e6).toLocaleString('es-CO',{maximumFractionDigits:2}) + ' M';
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const NAMES = ['AXA','MAPFRE','Bolívar'];
+const KEYS = ['axa','mapfre','bolivar'];
+
+// Filas: [cobertura, axa, mapfre, bolivar, ganadores (índices 0/1/2), o null si informativa]
+const ROWS = [
+  ['sec','Responsabilidad civil y personas'],
+  ['Responsabilidad civil (daños a terceros)','$5.000 millones','$5.000 millones','$4.000 millones',[0,1]],
+  ['Daños a terceros en otros medios (bici, patineta…)','—','—','$1.000 millones (Movilidad 360)',[2]],
+  ['Amparo patrimonial (si el conductor infringe o está ebrio)','Sí','Sí, más amplio (incluye licencia de categoría inferior y exceso de velocidad)','Sí',[1]],
+  ['Accidentes personales (muerte, conductor + 4)','$50 millones','$50 millones','$35 millones',[0,1]],
+  ['Daño moral y lucro cesante a terceros','Sí','Sí','No especifica',[0,1]],
+  ['Asistencia jurídica penal y civil','Sí, con límites claros (165–295 SMDLV)','Sí','Sí',null],
+  ['Casa cárcel','Sí, 50 SMDLV','No','No especifica',[0]],
+  ['sec','Deducibles (lo que pagas tú)'],
+  ['Pérdida total por daños o hurto','Sin deducible','Sin deducible','Sin deducible',[0,1,2]],
+  ['Pérdida parcial por daños','1 SMMLV (≈$1,75 M)','$1.200.000','0,8 SMMLV (≈$1,40 M)',[1]],
+  ['Pérdida parcial por hurto','1 SMMLV (≈$1,75 M)','$1.200.000','0,8 SMMLV (≈$1,40 M)',[1]],
+  ['Terremoto','Igual que daños','$1.200.000','Igual que daños',[1]],
+  ['sec','Coberturas del carro'],
+  ['Vehículo de reemplazo','15 días parcial / 20 días total','15 días parcial / 20 días total','Sí (días no especificados)',[0,1]],
+  ['Gastos de transporte por pérdida total','$40.000/día × 30 = $1,2 M','1,8 SMDLV/día × 30 ≈ $3,15 M','No especifica',[1]],
+  ['Rotura de vidrios','Solo vidrios laterales','Todos los vidrios, hasta 2 SMMLV sin deducible','No especifica',[1]],
+  ['Llantas estalladas','1 SMMLV por año','45 SMDLV (1,5 SMMLV) por año','No especifica',[1]],
+  ['Pequeños accesorios','1 SMMLV por año','45 SMDLV (1,5 SMMLV) por año','$1.100.000',[1]],
+  ['Pérdida de llaves','1 SMMLV, 2 veces','2 SMMLV, 1 llave','Sin límite, 2 veces',[2]],
+  ['Latonería y pintura (rayones)','1 SMMLV, 2 usos, deducible $90.000','1 SMMLV, 2 usos, deducible $90.000','No',[0,1]],
+  ['Grúa','70 SMDLV accidente / 50 SMDLV avería','Según condiciones (hasta 10 SMMLV traslado)','Según condiciones',null],
+  ['Gastos de traspaso por pérdida total','7 SMDLV','7 SMDLV','No especifica',[0,1]],
+  ['sec','Asistencias y servicios'],
+  ['Conductor elegido','Ilimitado','12 veces al año','No especifica',[0]],
+  ['Conductor por incapacidad médica','5 veces','5 veces','No especifica',[0,1]],
+  ['Revisión antes de viaje','2 veces (alineación, frenos, etc.)','No (solo recarga de extintor y botiquín 1 vez)','No',[0]],
+  ['Asistencia a personas en viaje (incl. exterior)','Plan PLUS (según clausulado)','Sí, detallada: repatriación, hospital y odontología en el exterior, equipaje','No especifica',[1]],
+  ['Asistencia exequial','Sí','Sí','No especifica',[0,1]],
+  ['Otros','Charlas de seguridad vial','Plan de seguridad vial (CESVI)','Descuento compra carro nuevo, reposición especial en pérdida total',null],
+];
+
+function buildTable(){
+  const tb = document.querySelector('#tbl tbody');
+  const wins=[0,0,0];
+  tb.innerHTML = ROWS.map(r=>{
+    if(r[0]==='sec') return `<tr class="sec"><td colspan="4">${r[1]}</td></tr>`;
+    const w = r[4]||[];
+    w.forEach(i=>wins[i]++);
+    const cell=(v,i)=>{
+      const cls = w.includes(i)?'win':(/^(No|—)$/.test(v)||v.startsWith('No ')&&!v.startsWith('No especifica')?'no':'');
+      return `<td class="${cls}">${v}</td>`;
+    };
+    return `<tr><td><b>${r[0]}</b></td>${cell(r[1],0)}${cell(r[2],1)}${cell(r[3],2)}</tr>`;
+  }).join('');
+  KEYS.forEach((k,i)=>$('s_'+k).textContent=wins[i]);
+}
+
+let charts={};
+function colors(){return [css('--axa'),css('--mapfre'),css('--bolivar')]}
+function baseOpts(money){
+  Chart.defaults.color = css('--muted');
+  Chart.defaults.borderColor = css('--line');
+  return {responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${money(c.raw)}`}}},
+    scales:{y:{beginAtZero:true,ticks:{callback:v=>money(v)}}}};
+}
+
+function render(){
+  const S = num($('smmlv').value)||1750905, D=S/30;
+  const prima = KEYS.map(k=>num($('p_'+k).value));
+  KEYS.forEach(k=>{try{localStorage.setItem('prima_'+k,$('p_'+k).value)}catch(e){}});
+  const dedParcial=[S,1200000,0.8*S];
+  const C=colors();
+
+  // 1. costo por escenarios
+  const scen=['Sin choques','1 choque parcial','2 choques parciales','3 choques parciales'];
+  const ds1 = KEYS.map((k,i)=>({label:NAMES[i],backgroundColor:C[i],borderRadius:4,
+    data:[0,1,2,3].map(n=>prima[i]+n*dedParcial[i])}));
+  draw('cCost','bar',{labels:scen,datasets:ds1},fmtM);
+
+  // 2. deducibles
+  draw('cDed','bar',{labels:['Daño parcial','Hurto parcial','Terremoto','Pérdida total'],
+    datasets:KEYS.map((k,i)=>({label:NAMES[i],backgroundColor:C[i],borderRadius:4,
+      data:[dedParcial[i],dedParcial[i],dedParcial[i],0]}))},fmt);
+
+  // 3. RC
+  draw('cRC','bar',{labels:['Responsabilidad civil (millones)','Accidentes personales (millones)'],
+    datasets:[[5000,50],[5000,50],[4000,35]].map((d,i)=>({label:NAMES[i],backgroundColor:C[i],borderRadius:4,data:d}))},
+    v=>'$'+v.toLocaleString('es-CO')+' M', {type:'logarithmic'});
+
+  // 4. sublímites
+  const sub={
+    labels:['Llantas','Pequeños accesorios','Llaves','Vidrios','Transporte en pérdida total','Latonería y pintura'],
+    data:[
+      [S, S, S, 0, 1200000, S],
+      [45*D, 45*D, 2*S, 2*S, 54*D, S],
+      [0, 1100000, 0, 0, 0, 0],
+    ]};
+  draw('cSub','bar',{labels:sub.labels,datasets:sub.data.map((d,i)=>({label:NAMES[i],backgroundColor:C[i],borderRadius:4,data:d}))},fmtM,null,true);
+
+  verdict(prima,dedParcial);
+}
+
+function draw(id,type,data,money,yScale,horizontal){
+  if(charts[id]) charts[id].destroy();
+  const o=baseOpts(money);
+  if(yScale) Object.assign(o.scales.y,yScale);
+  if(horizontal){o.indexAxis='y';o.scales={x:{beginAtZero:true,ticks:{callback:v=>money(v)}}};
+    o.plugins.tooltip.callbacks.label=c=>`${c.dataset.label}: ${c.raw?money(c.raw):'No incluye / no especifica'}`;}
+  charts[id]=new Chart($(id),{type,data,options:o});
+}
+
+function verdict(prima,ded){
+  const v=$('verdict');
+  const have=prima.filter(p=>p>0).length;
+  let html = `<p style="margin-top:0">En <b>coberturas</b>, <b style="color:var(--mapfre)">MAPFRE</b> es la más completa: deducible más bajo ($1,2 M), todos los vidrios, mejores sublímites en llantas, accesorios y transporte, y asistencia en el exterior. <b style="color:var(--axa)">AXA</b> es casi igual y gana en <b>conductor elegido ilimitado</b>, <b>casa cárcel</b> y <b>revisión antes de viaje</b>. <b style="color:var(--bolivar)">Bolívar</b> (la actual) tiene menos responsabilidad civil ($4.000 M vs $5.000 M) y menos seguro de vida para ocupantes.</p>`;
+  if(have<2){
+    html += `<p><b>Recomendación provisional:</b> MAPFRE, si su prima cuesta lo mismo o hasta unos $500.000 más que AXA. Si se usa mucho el conductor elegido, AXA. Escribe las primas arriba para ver la recomendación con números.</p>`;
+  } else {
+    const tot=prima.map((p,i)=>p>0?p+ded[i]:Infinity); // prima + 1 choque
+    const ord=[0,1,2].filter(i=>prima[i]>0).sort((a,b)=>prima[a]-prima[b]);
+    const cheap=ord[0];
+    const diff = prima[1]-prima[0];
+    html += `<p>Prima más barata: <b>${NAMES[cheap]}</b> (${fmt(prima[cheap])}).`;
+    if(prima[0]>0&&prima[1]>0){
+      html += diff<=0
+        ? ` MAPFRE cuesta ${fmt(-diff)} menos que AXA y además cubre más → <b>escoger MAPFRE</b>.`
+        : diff<=600000
+          ? ` MAPFRE cuesta ${fmt(diff)} más que AXA, pero esa diferencia se recupera con su deducible más bajo (${fmt(ded[0]-ded[1])} menos por choque) y mejores coberturas → <b>MAPFRE vale la pena</b>, salvo que se use mucho el conductor elegido.`
+          : ` MAPFRE cuesta ${fmt(diff)} más que AXA. Con esa diferencia, <b>AXA</b> es mejor negocio: las coberturas son casi iguales.`;
+    }
+    if(prima[2]>0){
+      const best=Math.min(...[prima[0],prima[1]].filter(p=>p>0));
+      html += prima[2]<best-500000
+        ? ` Bolívar es bastante más barata (${fmt(best-prima[2])} menos); vale considerarla, pero tiene menos responsabilidad civil y le faltan coberturas.`
+        : ` Bolívar no sale mucho más barata y cubre menos → no vale la pena renovar con ella.`;
+    }
+    html+='</p>';
+  }
+  v.innerHTML=html;
+}
+
+KEYS.forEach(k=>{try{const s=localStorage.getItem('prima_'+k);if(s)$('p_'+k).value=s}catch(e){}});
+['p_axa','p_mapfre','p_bolivar','smmlv'].forEach(id=>$(id).addEventListener('input',render));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
+buildTable(); render();
+</script>
+</body>
+</html>
